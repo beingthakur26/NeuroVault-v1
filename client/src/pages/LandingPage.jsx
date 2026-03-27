@@ -15,7 +15,7 @@ const Navbar = () => (
       <div className="hidden md:flex space-x-8">
         <a href="#features" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</a>
         <a href="#how-it-works" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">How it Works</a>
-        <a href="https://github.com" target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Documentation</a>
+        <a href="https://github.com/beingthakur26/NeuroVault-v1.git" target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">GitHub Repository</a>
       </div>
 
       <div className="flex items-center space-x-4">
