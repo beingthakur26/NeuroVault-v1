@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react'
+import { useSearchParams } from 'react-router-dom'
+import { XCircle, Folder } from 'lucide-react'
 import ItemCard from '../components/ItemCard'
 
 export default function SavedItems() {
@@ -8,12 +10,23 @@ export default function SavedItems() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const { getToken } = useAuth()
+  
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') || ''
+  const collectionId = searchParams.get('collection') || ''
+  const collectionName = searchParams.get('name') || ''
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
+        setLoading(true)
         const token = await getToken()
-        const res = await axios.get('http://localhost:5000/api/items/search', {
+        
+        let endpoint = `http://localhost:5000/api/items/search?`
+        if (query) endpoint += `query=${encodeURIComponent(query)}&`
+        if (collectionId) endpoint += `collection=${encodeURIComponent(collectionId)}&`
+          
+        const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setItems(res.data.items)
@@ -26,11 +39,24 @@ export default function SavedItems() {
       }
     }
     fetchItems()
-  }, [getToken])
+  }, [getToken, query, collectionId])
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-6">Saved Items</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold flex items-center gap-2">
+          {collectionName && <Folder className="text-blue-400" size={24} />}
+          {collectionName && !query ? `${collectionName} Collection` : query ? `Search Results for "${query}"` : "Saved Items"}
+        </h1>
+        {(query || collectionId) && (
+          <button 
+            onClick={() => setSearchParams({})} 
+            className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white transition-colors bg-white/5 py-1.5 px-3 rounded-lg border border-white/10"
+          >
+            <XCircle size={16} /> <span>Clear Filters</span>
+          </button>
+        )}
+      </div>
       
       {loading && <div className="text-gray-500 animate-pulse mt-8">Loading your knowledge base...</div>}
       {error && <div className="text-red-500 mt-8">{error}</div>}

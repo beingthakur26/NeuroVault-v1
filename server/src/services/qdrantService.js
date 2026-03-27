@@ -21,6 +21,22 @@ export const initQdrant = async () => {
       })
       console.log("Qdrant Collection created")
     }
+
+    // Ensure payload index exists for userId so we can filter during RAG searches
+    try {
+      await qdrant.createPayloadIndex(COLLECTION_NAME, {
+        field_name: "userId",
+        field_schema: "keyword",
+        wait: true
+      })
+      console.log("Qdrant userId index verified")
+    } catch (e) {
+      // It might already exist, which is fine, or throw a minor warning
+      if (!e.message?.includes('already exists')) {
+        console.warn("Qdrant Index Note:", e.message)
+      }
+    }
+
   } catch (error) {
     console.error("Qdrant Init Error:", error)
   }

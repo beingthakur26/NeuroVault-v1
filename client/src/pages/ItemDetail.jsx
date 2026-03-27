@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react'
 import { Trash2, ExternalLink, ArrowLeft, Tag, FolderPlus } from 'lucide-react'
+import BlockEditor from '../components/BlockEditor'
 
 export default function ItemDetail() {
   const { id } = useParams()
@@ -150,10 +151,8 @@ export default function ItemDetail() {
 
         {item.content && (
           <div className="border-t border-white/5 pt-6">
-            <h3 className="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wider">Raw Extracted Content</h3>
-            <div className="bg-black/50 p-4 rounded-xl max-h-96 overflow-y-auto font-mono text-sm text-gray-400 whitespace-pre-wrap">
-              {item.content}
-            </div>
+            <h3 className="text-sm font-semibold mb-3 text-gray-500 uppercase tracking-wider">Rich Text Notes & Extracts</h3>
+            <BlockEditor initialContent={item.content} itemId={item._id} />
           </div>
         )}
       </div>

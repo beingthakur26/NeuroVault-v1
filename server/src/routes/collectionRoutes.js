@@ -1,6 +1,6 @@
 import express from 'express'
 import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node'
-import { createCollection, getCollections, deleteCollection, addItemToCollection } from '../controllers/collectionController.js'
+import { createCollection, getCollections, deleteCollection, addItemToCollection, toggleCollectionPrivacy } from '../controllers/collectionController.js'
 
 const router = express.Router()
 
@@ -11,5 +11,6 @@ router.post('/', createCollection)
 router.get('/', getCollections)
 router.delete('/:id', deleteCollection)
 router.post('/:id/items', addItemToCollection)
+router.patch('/:id/share', toggleCollectionPrivacy)
 
 export default router

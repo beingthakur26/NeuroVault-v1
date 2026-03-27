@@ -84,3 +84,24 @@ export const addItemToCollection = async (req, res) => {
     res.status(500).json({ error: 'Failed' })
   }
 }
+
+export const toggleCollectionPrivacy = async (req, res) => {
+  try {
+    const { isPublic } = req.body
+    const clerkId = req.auth.userId
+    const user = await User.findOne({ clerkId })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const collection = await Collection.findOneAndUpdate(
+      { _id: req.params.id, userId: user._id },
+      { isPublic },
+      { new: true }
+    )
+    
+    if (!collection) return res.status(404).json({ error: 'Not found' })
+    
+    res.json({ success: true, collection })
+  } catch (error) {
+    res.status(500).json({ error: 'Failed' })
+  }
+}

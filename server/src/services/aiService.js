@@ -3,8 +3,8 @@ import { Mistral } from '@mistralai/mistralai'
 // Initialize Mistral Client
 const apiKey = process.env.MISTRAL_API_KEY
 const client = apiKey ? new Mistral({ apiKey }) : null
-// console.log("ENV CHECK:", process.env.MISTRAL_API_KEY);
-// console.log("Mistral Key Exists:", !!process.env.MISTRAL_API_KEY)
+
+export const getMistralClient = () => client
 
 export const generateSummaryAndTags = async (content) => {
   if (!client) {

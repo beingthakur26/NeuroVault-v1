@@ -7,6 +7,9 @@ import SavedItems from './pages/SavedItems'
 import Collections from './pages/Collections'
 import GraphView from './pages/GraphView'
 import ItemDetail from './pages/ItemDetail'
+import Profile from './pages/Profile'
+import ChatView from './pages/ChatView'
+import SharedCollection from './pages/SharedCollection'
 
 const ProtectedRoute = ({ children }) => {
   return (
@@ -38,11 +41,17 @@ function App() {
         
         <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
         <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
+        
+        {/* Unprotected Public Share Route */}
+        <Route path="/shared/:id" element={<SharedCollection />} />
+
         {/* Protected Dashboard Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
         <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatView /></ProtectedRoute>} />
         <Route path="/graph" element={<ProtectedRoute><GraphView /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
       </Routes>
     </Router>

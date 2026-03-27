@@ -1,9 +1,77 @@
 import Item from '../models/Item.js'
 import User from '../models/User.js'
 import { searchSimilar, deleteVector } from '../services/qdrantService.js'
-import { generateEmbeddings } from '../services/aiService.js'
+import { generateEmbeddings, getMistralClient } from '../services/aiService.js'
 import { extractContentFromUrl } from '../services/extractorService.js'
 import { aiQueue, processItemLogic } from '../workers/aiWorker.js'
+
+export const uploadItemImage = async (req, res) => {
+  try {
+    const file = req.file
+    if (!file) return res.status(400).json({ error: "No image file provided" })
+
+    const clerkId = req.auth.userId
+    let user = await User.findOne({ clerkId })
+    if (!user) {
+      user = await User.create({ clerkId, email: 'unknown' })
+    }
+
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
+    
+    // Process via Mistral Vision
+    const client = getMistralClient()
+    if (!client) {
+      return res.status(500).json({ error: "AI Vision Service unavailable" })
+    }
+
+    const response = await client.chat.complete({
+      model: 'pixtral-12b-2409',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: "Analyze this image and describe it in extremely high detail. Extract all readable text exactly as written. Identify core objects and intent." },
+            { type: 'image_url', imageUrl: base64Image }
+          ]
+        }
+      ]
+    })
+
+    const visionDescription = response.choices[0].message.content
+
+    // Save as Item
+    const newItem = await Item.create({
+      userId: user._id,
+      title: "Vision Captured Note",
+      url: "",
+      type: "image",
+      content: `[VISION OCR & ANALYSIS]:\n\n${visionDescription}`,
+      tags: [],
+      aiStatus: 'pending' // Vectorize it
+    })
+
+    const payload = {
+      itemId: newItem._id.toString(),
+      vectorId: newItem.vectorId,
+      extractedContent: newItem.content,
+      finalTitle: newItem.title,
+      finalType: newItem.type,
+      combinedTags: [],
+      userId: user._id.toString()
+    }
+
+    if (aiQueue) {
+      await aiQueue.add('process-item', payload)
+    } else {
+      processItemLogic(payload).catch(console.error)
+    }
+
+    res.status(201).json({ success: true, item: newItem })
+  } catch (error) {
+    console.error("Upload Image Error:", error)
+    res.status(500).json({ error: "Failed to parse image via Vision AI" })
+  }
+}
 
 export const saveItem = async (req, res) => {
   try {
@@ -16,17 +84,20 @@ export const saveItem = async (req, res) => {
       user = await User.create({ clerkId, email: 'unknown' }) // Ideally synced via webhook
     }
 
-    // 2. Extract Data from URL automatically
-    let finalTitle = title || url
+    // 2. Extract Data conditionally (Skip if Text Snippet is explicitly passed without a physical URL or if flagged as raw highlight text)
+    let finalTitle = title || url || "Text Highlight"
     let extractedContent = manualNotes || ''
     let finalType = type
 
-    if (url) {
+    if (url && type !== 'highlight') {
       const extracted = await extractContentFromUrl(url)
       finalTitle = extracted.title && extracted.title !== url ? extracted.title : finalTitle
       finalType = extracted.type
       // Append manually typed notes to the automatically extracted content
       extractedContent = manualNotes ? `[USER NOTES]: ${manualNotes}\n\n[EXTRACTED CONTENT]: ${extracted.content}` : extracted.content
+    } else if (type === 'highlight') {
+      // Direct raw text insertion (like a highlighted snippet from the web or extension)
+      extractedContent = `[HIGHLIGHT SAVED]:\n\n${manualNotes}\n\n[SOURCE URL]: ${url || 'Unknown'}`
     }
 
     // 3. Save to MongoDB as 'pending'
@@ -69,30 +140,56 @@ export const saveItem = async (req, res) => {
 
 export const searchItems = async (req, res) => {
   try {
-    const { query } = req.query
+    const { query, collection } = req.query
     const clerkId = req.auth.userId
     const user = await User.findOne({ clerkId })
 
+    let baseMatch = { userId: user._id }
+    if (collection) {
+      baseMatch.collections = collection
+    }
+
     if (!query) {
       // Return recent items if no query
-      const items = await Item.find({ userId: user?._id }).sort({ createdAt: -1 }).limit(50)
+      const items = await Item.find(baseMatch).sort({ createdAt: -1 }).limit(50)
       return res.json({ success: true, items })
     }
 
-    // Semantic Search
-    const vector = await generateEmbeddings(query)
-    const similar = await searchSimilar(vector, 10, {
-      must: [{ key: "userId", match: { value: user?._id?.toString() } }]
-    })
+    // 1. Semantic Search via Qdrant
+    let sortedItems = []
+    try {
+      const vector = await generateEmbeddings(query)
+      const similar = await searchSimilar(vector, 10, {
+        must: [{ key: "userId", match: { value: user?._id?.toString() } }]
+      })
+      const ids = similar.map(s => s.id)
+      const semanticItems = await Item.find({ vectorId: { $in: ids }, ...baseMatch })
+      sortedItems = ids.map(id => semanticItems.find(i => i.vectorId === id)).filter(Boolean)
+    } catch (e) {
+      console.error("Semantic Search fallback:", e)
+    }
 
-    // Fetch full records from Mongo using vectorId (since Qdrant IDs are UUIDs)
-    const ids = similar.map(s => s.id)
-    const items = await Item.find({ vectorId: { $in: ids } })
+    // 2. Exact Keyword Search via MongoDB Regex (Title & Tags)
+    const keywordItems = await Item.find({
+      ...baseMatch,
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { tags: { $regex: query, $options: 'i' } }
+      ]
+    }).limit(10)
 
-    // Sort items to match Qdrant order
-    const sortedItems = ids.map(id => items.find(i => i.vectorId === id)).filter(Boolean)
+    // 3. Merge and Deduplicate Results
+    const combined = [...sortedItems]
+    const existingIds = new Set(combined.map(i => i._id.toString()))
 
-    res.json({ success: true, items: sortedItems })
+    for (const item of keywordItems) {
+      if (!existingIds.has(item._id.toString())) {
+        combined.push(item)
+        existingIds.add(item._id.toString())
+      }
+    }
+
+    res.json({ success: true, items: combined })
   } catch (error) {
     console.error("Search Error:", error)
     res.status(500).json({ success: false, error: 'Failed to search items' })
@@ -199,6 +296,41 @@ export const getItemById = async (req, res) => {
     res.json({ success: true, item })
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch item' })
+  }
+}
+
+export const updateItemContent = async (req, res) => {
+  try {
+    const { content } = req.body
+    const clerkId = req.auth.userId
+    const user = await User.findOne({ clerkId })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const item = await Item.findOneAndUpdate(
+      { _id: req.params.id, userId: user._id },
+      { content },
+      { new: true }
+    )
+    if (!item) return res.status(404).json({ error: 'Item not found' })
+
+    // If it has a vectorId, we queue it to update definitions
+    if (item.vectorId && aiQueue) {
+      const payload = {
+        itemId: item._id.toString(),
+        vectorId: item.vectorId,
+        extractedContent: item.content,
+        finalTitle: item.title,
+        finalType: item.type,
+        combinedTags: item.tags,
+        userId: user._id.toString()
+      }
+      await aiQueue.add('process-item', payload)
+    }
+
+    res.json({ success: true, item })
+  } catch (error) {
+    console.error("Update Content Error:", error)
+    res.status(500).json({ error: 'Failed to update item content' })
   }
 }
 
