@@ -13,7 +13,7 @@ export default function RecentItems({ triggerRefresh }) {
     const fetchItems = async () => {
       try {
         const token = await getToken()
-        const res = await axios.get('http://localhost:5000/api/items/search', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/items/search`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setItems(res.data.items)

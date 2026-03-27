@@ -13,7 +13,7 @@ export default function SharedCollection() {
     const fetchShared = async () => {
       try {
         // Unauthenticated call
-        const res = await axios.get(`http://localhost:5000/api/public/collections/${id}`)
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/public/collections/${id}`)
         setData(res.data)
       } catch (err) {
         console.error(err)

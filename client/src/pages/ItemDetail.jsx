@@ -21,8 +21,8 @@ export default function ItemDetail() {
       try {
         const token = await getToken()
         const [itemRes, colRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/items/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`http://localhost:5000/api/collections`, { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${import.meta.env.VITE_API_URL}/api/items/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/collections`, { headers: { Authorization: `Bearer ${token}` } })
         ])
         setItem(itemRes.data.item)
         setCollections(colRes.data.collections)
@@ -38,7 +38,7 @@ export default function ItemDetail() {
   const handleAddToCollection = async (collectionId) => {
     try {
       const token = await getToken()
-      await axios.post(`http://localhost:5000/api/collections/${collectionId}/items`, { itemId: id }, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/collections/${collectionId}/items`, { itemId: id }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       alert("Added to collection!")
@@ -52,7 +52,7 @@ export default function ItemDetail() {
     if (!window.confirm("Are you sure you want to delete this memory?")) return;
     try {
       const token = await getToken()
-      await axios.delete(`http://localhost:5000/api/items/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       navigate('/saved')

@@ -17,8 +17,8 @@ export default function Dashboard() {
         const token = await getToken()
         
         const [clustersRes, resurfaceRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/items/clusters', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:5000/api/items/resurface', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${import.meta.env.VITE_API_URL}/api/items/clusters`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/items/resurface`, { headers: { Authorization: `Bearer ${token}` } })
         ])
 
         setClusters(clustersRes.data.clusters)

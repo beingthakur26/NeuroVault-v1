@@ -35,7 +35,7 @@ export default function BlockEditor({ initialContent, itemId }) {
       const token = await getToken();
       const markdown = await editor.blocksToMarkdownLossy(editor.document);
       
-      await axios.patch(`http://localhost:5000/api/items/${itemId}/content`, {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/items/${itemId}/content`, {
          content: markdown
       }, {
          headers: { Authorization: `Bearer ${token}` }

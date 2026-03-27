@@ -38,7 +38,7 @@ export default function SaveContent({ onSaved }) {
         setLoading(true)
         try {
           const token = await getToken()
-          const res = await axios.post('http://localhost:5000/api/items/save', {
+          const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/items/save`, {
             title: extTitle || extUrl,
             url: extUrl,
             type: extSnippet ? 'highlight' : 'article',
@@ -92,7 +92,7 @@ export default function SaveContent({ onSaved }) {
       if (file) {
         const formData = new FormData()
         formData.append('image', file)
-        const res = await axios.post('http://localhost:5000/api/items/upload', formData, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/items/upload`, formData, {
           headers: { 
             Authorization: `Bearer ${token}`, 
             'Content-Type': 'multipart/form-data' 
@@ -104,7 +104,7 @@ export default function SaveContent({ onSaved }) {
           if (onSaved) onSaved(res.data.item)
         }
       } else {
-        const res = await axios.post('http://localhost:5000/api/items/save', {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/items/save`, {
           title: url,
           url,
           type: 'article',

@@ -22,7 +22,7 @@ export default function SavedItems() {
         setLoading(true)
         const token = await getToken()
         
-        let endpoint = `http://localhost:5000/api/items/search?`
+        let endpoint = `${import.meta.env.VITE_API_URL}/api/items/search?`
         if (query) endpoint += `query=${encodeURIComponent(query)}&`
         if (collectionId) endpoint += `collection=${encodeURIComponent(collectionId)}&`
           

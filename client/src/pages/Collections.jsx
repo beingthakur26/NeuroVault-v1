@@ -18,7 +18,7 @@ export default function Collections() {
     try {
       setLoading(true)
       const token = await getToken()
-      const colRes = await axios.get('http://localhost:5000/api/collections', { 
+      const colRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/collections`, { 
         headers: { Authorization: `Bearer ${token}` } 
       })
       setCollections(colRes.data.collections)
@@ -42,7 +42,7 @@ export default function Collections() {
     setIsCreating(true)
     try {
       const token = await getToken()
-      await axios.post('http://localhost:5000/api/collections', { name: newCollectionName }, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/collections`, { name: newCollectionName }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNewCollectionName('')
@@ -60,7 +60,7 @@ export default function Collections() {
     if (!window.confirm("Are you sure you want to delete this collection?")) return
     try {
       const token = await getToken()
-      await axios.delete(`http://localhost:5000/api/collections/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/collections/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       await fetchData()
@@ -74,7 +74,7 @@ export default function Collections() {
     e.stopPropagation()
     try {
       const token = await getToken()
-      await axios.patch(`http://localhost:5000/api/collections/${id}/share`, { isPublic: !currentStatus }, {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/collections/${id}/share`, { isPublic: !currentStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       await fetchData() // Refresh state

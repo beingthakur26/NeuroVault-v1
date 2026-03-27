@@ -13,7 +13,7 @@ export default function GraphView() {
     const fetchGraph = async () => {
       try {
         const token = await getToken()
-        const res = await axios.get('http://localhost:5000/api/items/graph', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/items/graph`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setGraphData(res.data)
