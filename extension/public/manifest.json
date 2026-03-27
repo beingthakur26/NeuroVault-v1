@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "NeuroVault Extractor",
+  "version": "1.0.0",
+  "description": "Save content to your AI Second Brain.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "index.html"
+  }
+}

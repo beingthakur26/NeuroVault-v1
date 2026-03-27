@@ -1,0 +1,65 @@
+import { Worker, Queue } from 'bullmq'
+import { v4 as uuidv4 } from 'uuid'
+import { redisConnection } from '../config/redis.js'
+import Item from '../models/Item.js'
+import { generateSummaryAndTags, generateEmbeddings } from '../services/aiService.js'
+import { upsertVector } from '../services/qdrantService.js'
+
+export const aiQueue = redisConnection ? new Queue('ai-processing', { connection: redisConnection }) : null
+
+export const processItemLogic = async ({ itemId, vectorId, extractedContent, finalTitle, finalType, combinedTags, userId }) => {
+  console.log(`[AI Logic] Started AI processing for item ${itemId}`)
+
+  try {
+    // 1. Generate AI Metadata
+    const { summary, tags: aiTags } = await generateSummaryAndTags(extractedContent || finalTitle)
+    const mergedTags = [...new Set([...combinedTags, ...aiTags])]
+    
+    // 2. Generate Vector Embedding
+    const vector = await generateEmbeddings(summary + " " + mergedTags.join(' '))
+
+    // 3. Update MongoDB
+    const item = await Item.findById(itemId)
+    let activeVectorId = vectorId || (item && item.vectorId)
+    
+    // Backward compatibility: If no vectorId exists yet, generate a new UUIDv4
+    if (!activeVectorId) {
+      activeVectorId = uuidv4()
+    }
+
+    if (item) {
+      item.summary = summary
+      item.tags = mergedTags
+      item.vectorId = activeVectorId
+      item.aiStatus = 'completed'
+      await item.save()
+    }
+
+    // 4. Update Qdrant using the valid UUIDv4
+    if (vector.length > 0) {
+      await upsertVector(activeVectorId, vector, {
+        userId: userId.toString(),
+        type: finalType,
+        tags: mergedTags
+      })
+    }
+
+    console.log(`[AI Logic] Completed processing for item ${itemId}`)
+  } catch (err) {
+    console.error(`[AI Logic] Failed for item ${itemId}:`, err)
+    await Item.findByIdAndUpdate(itemId, { aiStatus: 'failed' })
+    throw err 
+  }
+}
+
+if (redisConnection) {
+  const worker = new Worker('ai-processing', async job => {
+    await processItemLogic(job.data)
+  }, { connection: redisConnection })
+
+  worker.on('failed', (job, err) => {
+    console.error(`Job ${job.id} failed with ${err.message}`)
+  })
+} else {
+  console.warn("⚠️ BullMQ queue not started. Running AI without Redis.")
+}

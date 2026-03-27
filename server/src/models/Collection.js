@@ -1,0 +1,21 @@
+import mongoose from 'mongoose'
+
+const collectionSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Collection',
+    default: null
+  }
+}, { timestamps: true })
+
+const Collection = mongoose.model('Collection', collectionSchema)
+export default Collection
