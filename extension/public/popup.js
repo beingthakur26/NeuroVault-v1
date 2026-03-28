@@ -12,9 +12,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // const API_URL = 'http://localhost:5000';
   // const DASHBOARD_URL = 'http://localhost:5173';
 
+  async function getClerkToken() {
+    return new Promise((resolve) => {
+      chrome.cookies.get({ url: DASHBOARD_URL, name: '__session' }, (cookie) => {
+        resolve(cookie ? cookie.value : null);
+      });
+    });
+  }
+
   // Auth Check
   try {
-    const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+    const token = await getClerkToken();
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    const res = await fetch(`${API_URL}/api/me`, { 
+      headers,
+      credentials: 'include' 
+    });
+
     if (res.ok) {
       statusMsg.style.display = 'none';
       saveContainer.style.display = 'block';
@@ -60,9 +75,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       saveBtn.innerText = 'Saving...';
 
+      const token = await getClerkToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${API_URL}/api/items/save`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         credentials: 'include',
         body: JSON.stringify({
           ...result,

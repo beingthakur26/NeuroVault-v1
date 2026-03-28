@@ -11,11 +11,25 @@ export default function Popup() {
     checkAuth()
   }, [])
 
+  const getClerkToken = async () => {
+    return new Promise((resolve) => {
+      // Get session from the website domain
+      chrome.cookies.get({ url: DASHBOARD_URL, name: '__session' }, (cookie) => {
+        resolve(cookie ? cookie.value : null)
+      })
+    })
+  }
+
   const checkAuth = async () => {
     try {
-      await axios.get(`${API_URL}/api/me`, { withCredentials: true })
+      const token = await getClerkToken()
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      
+      await axios.get(`${API_URL}/api/me`, { 
+        headers,
+        withCredentials: true 
+      })
       setStatus('idle')
-      // AUTOMATIC SAVE: If already authenticated, start saving immediately
       handleSave()
     } catch (error) {
       console.error("Auth Check Failed:", error)
@@ -44,10 +58,16 @@ export default function Popup() {
       })
 
       try {
+        const token = await getClerkToken()
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
         await axios.post(`${API_URL}/api/items/save`, {
           ...result,
           type: 'article'
-        }, { withCredentials: true })
+        }, { 
+          headers,
+          withCredentials: true 
+        })
         setStatus('success')
         // Auto-close after 1.5s on success
         setTimeout(() => window.close(), 1500)

@@ -5,7 +5,8 @@
   "description": "Save content to your AI Second Brain.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "cookies"
   ],
   "host_permissions": [
     "<all_urls>"
