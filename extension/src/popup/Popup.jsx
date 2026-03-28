@@ -23,18 +23,27 @@ export default function Popup() {
         }
       })
 
-      // 3. Send to API (Assume authenticated session via cookies or specific token flow)
-      // NOTE: In production, you'd integrate Clerk authentication token here.
-      const clerkToken = "TODO: Retrieve Token" 
+      // 3. Send to API
+      const API_URL = 'https://neurovault-v1-backend.onrender.com'
+      const DASHBOARD_URL = 'https://neurovault-ui.onrender.com'
       
-      await axios.post('http://localhost:5000/api/items/save', {
-        ...result,
-        type: 'article'
-      }, {
-        headers: { Authorization: `Bearer ${clerkToken}` }
-      })
-
-      setStatus('success')
+      try {
+        await axios.post(`${API_URL}/api/items/save`, {
+          ...result,
+          type: 'article'
+        })
+        setStatus('success')
+      } catch (axError) {
+        // If 401/Unauthorized, redirect to dashboard as fallback
+        if (axError.response?.status === 401) {
+          setStatus('error')
+          setTimeout(() => {
+            chrome.tabs.create({ url: `${DASHBOARD_URL}/dashboard?saveUrl=${encodeURIComponent(result.url)}&title=${encodeURIComponent(result.title)}` })
+          }, 1500)
+        } else {
+          throw axError
+        }
+      }
     } catch (error) {
       console.error(error)
       setStatus('error')

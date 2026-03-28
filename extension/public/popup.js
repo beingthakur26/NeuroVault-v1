@@ -27,10 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // 3. To save, we actually just open the Dashboard Save URL with payload
       // Since clerk auth in a vanilla extension requires complex cookie sharing,
       // it is easiest to pass the URL to the user's dashboard!
-      const dashboardUrl = `http://localhost:5173/dashboard?saveUrl=${encodeURIComponent(result.url)}&title=${encodeURIComponent(result.title)}`;
+      const API_URL = 'https://neurovault-v1-backend.onrender.com';
+      const DASHBOARD_URL = 'https://neurovault-ui.onrender.com';
+      const dashboardUrl = `${DASHBOARD_URL}/dashboard?saveUrl=${encodeURIComponent(result.url)}&title=${encodeURIComponent(result.title)}`;
       
       // Alternatively try calling backend directly and let Clerk cookie pass if it exists
-      const res = await fetch('http://localhost:5000/api/items/save', {
+      const res = await fetch(`${API_URL}/api/items/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
