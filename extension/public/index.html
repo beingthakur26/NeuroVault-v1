@@ -29,10 +29,21 @@
   </style>
 </head>
 <body>
-  <h2>NeuroVault</h2>
-  <p>Save this page to your brain.</p>
-  <button id="saveBtn">Save Page</button>
+  <div id="authContainer" style="display: none;">
+    <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 8px 0;">NeuroVault</h2>
+    <p style="font-size: 13px; color: #a1a1aa; margin: 0 0 16px 0;">Please login or sign up to save items to your brain.</p>
+    <button id="loginBtn" style="margin-bottom: 8px;">Log In</button>
+    <button id="signupBtn" style="background-color: transparent; color: white; border: 1px solid #3f3f46;">Sign Up</button>
+  </div>
+
+  <div id="saveContainer" style="display: none;">
+    <h2>NeuroVault</h2>
+    <p>Save this page to your brain.</p>
+    <button id="saveBtn">Save Page</button>
+  </div>
   
+  <div id="statusMsg" style="text-align: center; font-size: 14px; margin-top: 20px;">Checking Authentication...</div>
+
   <script src="popup.js"></script>
 </body>
 </html>

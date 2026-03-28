@@ -34,14 +34,23 @@ export default function Dashboard() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <a 
-          href="/extension-build.zip" 
-          download 
-          className="flex items-center space-x-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:scale-105 transition-transform shadow-lg shadow-indigo-500/20"
-        >
-          <Download size={16} />
-          <span>Get Chrome Extension (.zip)</span>
-        </a>
+        <div className="flex space-x-3">
+          <button 
+            onClick={() => setRefresh(r => r + 1)}
+            className="flex items-center space-x-2 bg-white/5 border border-white/10 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+          >
+            <RotateCw size={16} />
+            <span>Refresh</span>
+          </button>
+          <a 
+            href="/extension-build.zip" 
+            download 
+            className="flex items-center space-x-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:scale-105 transition-transform shadow-lg shadow-indigo-500/20"
+          >
+            <Download size={16} />
+            <span>Get Extension</span>
+          </a>
+        </div>
       </div>
       
       <SaveContent onSaved={() => setRefresh(r => r + 1)} />

@@ -32,10 +32,11 @@ document.addEventListener('mouseup', (e) => {
           ev.preventDefault(); // prevent selection from clearing immediately
           ev.stopPropagation();
           const currentSelection = window.getSelection().toString().trim();
-          if (currentSelection) {
-             const dashboardUrl = `http://localhost:5173/dashboard?saveUrl=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(document.title)}&snippet=${encodeURIComponent(currentSelection)}`;
-             window.open(dashboardUrl, '_blank');
-          }
+           if (currentSelection) {
+              const DASHBOARD_URL = 'https://neurovault-v1.onrender.com';
+              const dashboardUrl = `${DASHBOARD_URL}/dashboard?saveUrl=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(document.title)}&snippet=${encodeURIComponent(currentSelection)}`;
+              window.open(dashboardUrl, '_blank');
+           }
           removeBtn();
         });
       }
