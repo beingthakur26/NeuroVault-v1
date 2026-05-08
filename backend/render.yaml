@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: second-brain-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+
+  - type: worker
+    name: second-brain-worker
+    env: node
+    buildCommand: npm install
+    startCommand: node src/workers/item.worker.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromService:
+          type: web
+          name: second-brain-api
+          envVarKey: MONGODB_URI
+      - key: REDIS_URL
+        fromService:
+          type: web
+          name: second-brain-api
+          envVarKey: REDIS_URL
+      - key: MISTRAL_API_KEY
+        fromService:
+          type: web
+          name: second-brain-api
+          envVarKey: MISTRAL_API_KEY
+      - key: QDRANT_URL
+        fromService:
+          type: web
+          name: second-brain-api
+          envVarKey: QDRANT_URL
+      - key: QDRANT_API_KEY
+        fromService:
+          type: web
+          name: second-brain-api
+          envVarKey: QDRANT_API_KEY
